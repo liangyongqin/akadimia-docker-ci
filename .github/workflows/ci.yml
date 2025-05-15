@@ -15,35 +15,20 @@ on:
 permissions:
   packages: write
 
-concurrency:
-  group: ${{ github.ref }}
-  cancel-in-progress: true
-
 env:
-  DOCKERHUB_BASE: docker.io/zephyrprojectrtos
-  GHCR_BASE: ghcr.io/zephyrproject-rtos
+  DOCKERHUB_BASE: docker.io/liangyq
+  GHCR_BASE: ghcr.io/liangyq
   BASE_IMAGE_NAME: ci-base
   CI_IMAGE_NAME: ci
   DEVELOPER_IMAGE_NAME: zephyr-build
 
 jobs:
   build:
-    name: Build (${{ matrix.variant.platform }})
-    runs-on:
-      group: ${{ matrix.variant.builder }}
+    name: Build
+    runs-on: ubuntu-latest
     container:
       image: ghcr.io/zephyrproject-rtos/image-build:v1.0.0
-
-    strategy:
-      fail-fast: true
-      matrix:
-        variant:
-        - platform: linux/amd64
-          arch: amd64
-          builder: zephyr-runner-v2-linux-x64-4xlarge
-        - platform: linux/arm64
-          arch: arm64
-          builder: zephyr-runner-v2-linux-arm64-4xlarge
+      options: --security-opt seccomp=unconfined --tmpfs /tmp  # 新增安全选项
 
     steps:
     - name: Configure temporary directory
@@ -172,10 +157,11 @@ jobs:
 
   merge:
     name: Merge
-    runs-on:
-      group: zephyr-runner-v2-linux-x64-4xlarge
+    runs-on: ubuntu-latest
+      
     container:
       image: ghcr.io/zephyrproject-rtos/image-build:v1.0.0
+      options: --security-opt seccomp=unconfined --tmpfs /tmp  # 新增安全选项
     needs: build
     if: ${{ github.event_name != 'pull_request' }}
 
